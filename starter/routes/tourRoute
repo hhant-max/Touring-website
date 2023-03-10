@@ -1,0 +1,61 @@
+const express = require('express');
+const tourController = require('../controllers/tourController');
+const authController = require('../controllers/authController');
+const reviewRoute = require('./reviewRoute');
+
+const router = express.Router();
+
+// check id
+// router.param('id', tourController.checkId);
+// router
+//   .route('/top-5-cheap')
+//   .get(tourController.aliasTopTours, tourController.getAllTours);
+router
+  .route('/top-five-cheap')
+  .get(tourController.topCheapFive, tourController.getAllTours);
+
+router.route('/tour-stats').get(tourController.getTourStats);
+router
+  .route('/monthly-plan/:year')
+  .get(
+    authController.protect,
+    authController.restrictTo('admin', 'guide-lead', 'guide'),
+    tourController.getMonthlyPlan
+  );
+
+// get tours within certain distacne with centr
+// /tours-within?distance=233&center=-40,45&unit=mi
+router
+  .route('/tours-within/:distance/center/:latlng/unit/:unit')
+  .get(tourController.getToursWithin);
+
+router.route('/distances/:latlng/unit/:unit').get(tourController.getDistances);
+// get tour id and pass it to reviewRoutes
+// post /tours/asdfasdfas/reviews
+router.use('/:tourId/reviews', reviewRoute);
+router
+  .route('/')
+  .get(tourController.getAllTours)
+  .post(
+    authController.protect,
+    authController.restrictTo('admin', 'guide-lead'),
+    tourController.createTour
+  );
+
+router
+  .route('/:id')
+  .get(tourController.getTour)
+  .patch(
+    authController.protect,
+    authController.restrictTo('admin', 'guide-lead'),
+    tourController.updateTour
+  )
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin', 'guide-lead'),
+    tourController.deleteTour
+  );
+
+// .get(tourController.aliasTopTours, tourController.getAllTour);
+
+module.exports = router;
